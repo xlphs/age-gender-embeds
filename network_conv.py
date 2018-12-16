@@ -43,8 +43,33 @@ def inference(features, age_labels, gender_labels, training=True):
 	branch2 = slim.fully_connected(branch1, 32, activation_fn=None,
 															scope='Net/Branch2_2', reuse=False)
 	gender_logits = slim.fully_connected(branch2, 2, activation_fn=None,
-																	 weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+																	 weights_initializer=slim.initializers.xavier_initializer(),
 																	 weights_regularizer=slim.l2_regularizer(1e-5),
 																	 scope='Logits/Gender', reuse=False)
 
 	return net, gender_logits, age_logits
+
+def transfer(facenet_output, features, age_labels, gender_labels, training=True, weight_decay=5e-4):
+  net = slim.fully_connected(facenet_output, 1024, scope='Net/fc1', reuse=False)
+  net = slim.dropout(net, 0.8, is_training=training, scope='Dropout')
+  net = slim.fully_connected(facenet_output, 1024, scope='Net/fc2', reuse=False)
+
+  branch1 = slim.fully_connected(net, 64, scope='Net/Branch1', reuse=False)
+  branch1 = slim.dropout(branch1, 0.8, is_training=training, scope='Dropout')
+  branch1 = slim.fully_connected(branch1, 32, scope='Net/Branch1_2', reuse=False)
+  branch1 = slim.dropout(branch1, 0.8, is_training=training, scope='Dropout')
+  age_logits = slim.fully_connected(branch1, 117, activation_fn=None,
+                                    weights_initializer=slim.initializers.xavier_initializer(),
+                                    weights_regularizer=slim.l2_regularizer(weight_decay),
+                                    scope='Net/Logits/Age', reuse=False)
+
+  branch2 = slim.fully_connected(net, 64, scope='Net/Branch2', reuse=False)
+  branch2 = slim.dropout(branch2, 0.8, is_training=training, scope='Dropout')
+  branch2 = slim.fully_connected(branch2, 32, scope='Net/Branch2_2', reuse=False)
+  branch2 = slim.dropout(branch2, 0.8, is_training=training, scope='Dropout')
+  gender_logits = slim.fully_connected(branch2, 2, activation_fn=None,
+                                       weights_initializer=slim.initializers.xavier_initializer(),
+                                       weights_regularizer=slim.l2_regularizer(weight_decay),
+                                       scope='Net/Logits/Gender', reuse=False)
+
+  return net, gender_logits, age_logits

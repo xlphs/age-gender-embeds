@@ -59,7 +59,7 @@ def shuffle_data(data):
 	return [addrs, age_labels, gender_labels]
 
 if __name__ == '__main__':
-	data_path = 'dataset512/*.csv'
+	data_path = 'dataset/*.csv'
 
 	data = read_all(data_path)
 	[addrs, age_labels, gender_labels] = shuffle_data(data)
