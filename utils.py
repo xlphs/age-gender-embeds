@@ -10,13 +10,16 @@ def load_csv_features(path):
 def read_and_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
+
+    embeddings_size = 512
+
     features = tf.parse_single_example(
         serialized_example,
         # Defaults are not specified since both keys are required.
         features={
             'age': tf.FixedLenFeature([], tf.int64),
             'gender': tf.FixedLenFeature([], tf.int64),
-            'features': tf.FixedLenFeature([512], tf.float32),
+            'features': tf.FixedLenFeature([embeddings_size], tf.float32),
             'file_name': tf.FixedLenFeature([], tf.string)
         })
 

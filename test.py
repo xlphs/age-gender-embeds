@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from network import inference
+from network_conv import inference
 from utils import get_inputs
 
 def test_once(tfrecords_path, batch_size, model_checkpoint_path):

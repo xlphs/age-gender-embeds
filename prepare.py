@@ -59,19 +59,19 @@ def shuffle_data(data):
 	return [addrs, age_labels, gender_labels]
 
 if __name__ == '__main__':
-	data_path = 'dataset/*.csv'
+	data_path = 'dataset512/*.csv'
 
 	data = read_all(data_path)
 	[addrs, age_labels, gender_labels] = shuffle_data(data)
 
-	# get 2000 for testing, the rest for training
-	test_addrs = addrs[0:2000]
-	test_ages = age_labels[0:2000]
-	test_genders = gender_labels[0:2000]
+	# remove some for testing, the rest for training
+	test_addrs = addrs[0:1500]
+	test_ages = age_labels[0:1500]
+	test_genders = gender_labels[0:1500]
 
-	train_addrs = addrs[2000:]
-	train_ages = age_labels[2000:]
-	train_genders = gender_labels[2000:]
+	train_addrs = addrs[1500:]
+	train_ages = age_labels[1500:]
+	train_genders = gender_labels[1500:]
 
 	save_to_tfrecords('tfrecords/train.tfrecords', 
 		train_addrs, train_ages, train_genders)

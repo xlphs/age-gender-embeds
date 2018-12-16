@@ -3,48 +3,42 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from network import inference
+from network_conv import inference
 from utils import get_inputs, load_csv_features
 
+def load_graph(frozen_graph_filename):
+    # We load the protobuf file from the disk and parse it to retrieve the 
+    # unserialized graph_def
+    with tf.gfile.GFile(frozen_graph_filename, "rb") as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+
+    # Then, we import the graph_def into a new Graph and returns it 
+    with tf.Graph().as_default() as graph:
+        # The name var will prefix every op/nodes in your graph
+        # Since we load everything in a new graph, this is not needed
+        tf.import_graph_def(graph_def, name="")
+    return graph
+
 def run(image_path, model_path):
-    with tf.Graph().as_default():
-        sess = tf.Session()
-        
-        input_placeholder = tf.placeholder(tf.float32, shape=[None, 512], name='input')
-        features = np.array(load_csv_features(image_path)).reshape(1, 512)
+    graph = load_graph(model_path)
 
-        net, gender_logits, age_logits = inference(input_placeholder, [], [], training=False)
+    with tf.Session(graph=graph) as sess:
+        input = graph.get_tensor_by_name('input:0')
+        age = graph.get_tensor_by_name('age:0')
+        gender = graph.get_tensor_by_name('gender:0')
 
-        gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
-        
-        age_ = tf.cast(tf.constant([i for i in range(0, 117)]), tf.float32)
-        age = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
-        
-        init_op = tf.group(tf.global_variables_initializer(),
-                           tf.local_variables_initializer())
-        
-        sess.run(init_op)
-        
-        saver = tf.train.Saver()
-        ckpt = tf.train.get_checkpoint_state(model_path)
-        if ckpt and ckpt.model_checkpoint_path:
-            saver.restore(sess, ckpt.model_checkpoint_path)
-            print("restored!")
-        else:
-            pass
+        embeddings_size = 512
+        features = np.array(load_csv_features(image_path)).reshape(1, embeddings_size)
 
-        return sess.run([age, gender], feed_dict={input_placeholder: features})
-
-def main(model_path, image_path, batch_size):
-    best_gender_acc, gender_model, best_age_mae, age_model, result = choose_best_model(model_path, image_path,
-                                                                                       batch_size)
-    return best_gender_acc, gender_model, best_age_mae, age_model, result
-
+        return sess.run([age, gender], feed_dict={
+           input: features,
+        })
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--features", type=str, default="./test.csv", help="Features path")
-    parser.add_argument("--model_path", type=str, default="./models/", help="Model path")
+    parser.add_argument("--model_path", type=str, default="./models/frozen.pb", help="Model path")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")
     args = parser.parse_args()

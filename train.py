@@ -3,7 +3,7 @@ import os
 import time
 
 import tensorflow as tf
-from network import inference
+from network_conv import inference
 from utils import get_inputs
 
 def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_lr, wd, kp):
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     parser.add_argument("--log_path", type=str, default="./log", help="Path to save logs")
     parser.add_argument("--epoch", type=int, default=50, help="Epoch")
     parser.add_argument("--tfrecords", type=str, default="./tfrecords/train.tfrecords", help="Path of tfrecords")
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--keep_prob", type=float, default=0.8, help="Used by dropout")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")

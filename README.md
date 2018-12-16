@@ -31,23 +31,19 @@ Evaluate command: `python test.py`
 Output:
 
 ```
-Age_MAE:6.57, Gender_Acc:88.28%, Loss:3.52
-Age_MAE:6.73, Gender_Acc:88.28%, Loss:3.61
-Age_MAE:6.02, Gender_Acc:89.06%, Loss:3.44
-Age_MAE:5.18, Gender_Acc:87.50%, Loss:3.36
-Age_MAE:6.05, Gender_Acc:92.97%, Loss:3.28
-Age_MAE:6.13, Gender_Acc:92.97%, Loss:3.29
-Age_MAE:6.12, Gender_Acc:90.62%, Loss:3.46
-Age_MAE:5.59, Gender_Acc:88.28%, Loss:3.32
-Age_MAE:5.80, Gender_Acc:88.28%, Loss:3.43
-Age_MAE:4.95, Gender_Acc:91.41%, Loss:3.33
-Age_MAE:5.04, Gender_Acc:94.53%, Loss:3.06
-Age_MAE:5.52, Gender_Acc:89.06%, Loss:3.36
-Age_MAE:5.29, Gender_Acc:89.06%, Loss:3.30
-Age_MAE:6.24, Gender_Acc:93.75%, Loss:3.40
-Age_MAE:6.84, Gender_Acc:90.62%, Loss:3.55
+Age_MAE:4.93, Gender_Acc:91.41%, Loss:4.09
+Age_MAE:6.54, Gender_Acc:93.75%, Loss:4.40
+Age_MAE:6.31, Gender_Acc:91.41%, Loss:4.60
+Age_MAE:5.23, Gender_Acc:92.97%, Loss:4.19
+Age_MAE:5.08, Gender_Acc:91.41%, Loss:4.09
+Age_MAE:5.95, Gender_Acc:89.84%, Loss:4.42
+Age_MAE:4.85, Gender_Acc:93.75%, Loss:4.03
+Age_MAE:5.68, Gender_Acc:89.84%, Loss:4.14
+Age_MAE:5.22, Gender_Acc:89.84%, Loss:4.38
+Age_MAE:5.26, Gender_Acc:86.72%, Loss:4.41
+Age_MAE:5.94, Gender_Acc:89.84%, Loss:4.13
 Summary:
-Age_MAE:5.87, Gender_Acc:90.31%, Loss:3.38
+Age_MAE:5.54, Gender_Acc:90.98%, Loss:4.26
 ```
 
 ### Test model with arbitrary features
