@@ -55,12 +55,9 @@ def test_once(tfrecords_path, batch_size, model_checkpoint_path):
     with tf.Graph().as_default():
         sess = tf.Session()
 
+        phase_train = False
         features, age_labels, gender_labels, file_paths = get_inputs(path=tfrecords_path,
                                                     batch_size=batch_size, num_epochs=1)
-
-        phase_train = False
-        features, age_labels, gender_labels, _ = get_inputs(path=tfrecords_path,
-                                                    batch_size=batch_size, num_epochs=epoch)
 
         # Build the inference graph
         # see facenet train_softmax.py
