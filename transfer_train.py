@@ -11,8 +11,6 @@ def read_and_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
 
-    embeddings_size = 512
-
     features = tf.parse_single_example(
         serialized_example,
         # Defaults are not specified since both keys are required.
@@ -108,7 +106,7 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         train_writer = tf.summary.FileWriter(log_dir, sess.graph)
 
         variables_to_restore = slim.get_variables_to_restore()
-        new_saver = tf.train.Saver(variables_to_restore, max_to_keep=5)
+        new_saver = tf.train.Saver(variables_to_restore, max_to_keep=50)
         ckpt = tf.train.get_checkpoint_state(model_path)
         if ckpt and ckpt.model_checkpoint_path:
             new_saver.restore(sess, ckpt.model_checkpoint_path)
@@ -130,7 +128,6 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
                     duration = time.time() - start_time
                     print('%.3f sec' % duration)
                     start_time = time.time()
-                if step % 1000 == 0:
                     save_path = new_saver.save(sess, os.path.join(model_path, "model.ckpt"), global_step=global_step)
                     print("Model saved in file: %s" % save_path)
                 step = sess.run(global_step)

@@ -12,8 +12,6 @@ def read_and_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
 
-    embeddings_size = 512
-
     features = tf.parse_single_example(
         serialized_example,
         # Defaults are not specified since both keys are required.
