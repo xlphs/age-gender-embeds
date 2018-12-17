@@ -40,3 +40,8 @@ def get_inputs(path, batch_size, num_epochs, allow_smaller_final_batch=True):
         [image, age, gender, file_path], batch_size=batch_size)
 
     return images, sparse_labels, genders, file_paths
+
+def losses(logits, labels):
+    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+    mean_loss = tf.reduce_mean(loss)
+    return mean_loss

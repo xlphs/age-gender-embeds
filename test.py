@@ -4,7 +4,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from network_conv import inference
-from utils import get_inputs
+from utils import get_inputs, losses
 
 def test_once(tfrecords_path, batch_size, model_checkpoint_path):
     with tf.Graph().as_default():
@@ -18,23 +18,20 @@ def test_once(tfrecords_path, batch_size, model_checkpoint_path):
         net, gender_logits, age_logits = inference(features, age_labels, gender_labels,
                                           training=False)
 
-        age_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=age_labels, logits=age_logits)
-        age_cross_entropy_mean = tf.reduce_mean(age_cross_entropy)
+        # Define loss (cross entropy) calculation for age and gender
+        loss_genders = losses(gender_logits, gender_labels)
+        loss_ages = losses(age_logits, age_labels)
 
-        gender_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=gender_labels,
-                                                                              logits=gender_logits)
-        gender_cross_entropy_mean = tf.reduce_mean(gender_cross_entropy)
-        total_loss = tf.add_n(
-            [gender_cross_entropy_mean, age_cross_entropy_mean] + tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES),
-            name="total_loss")
+        # total loss with regularization
+        total_loss = tf.add_n([loss_genders, loss_ages/5])
 
+        gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
+        
+        # Calculate predicted age to get accuracy
         age_ = tf.cast(tf.constant([i for i in range(0, 117)]), tf.float32)
         prob_age = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
         abs_age_error = tf.losses.absolute_difference(prob_age, age_labels)
 
-        prob_gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
-        gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
-        
         init_op = tf.group(tf.global_variables_initializer(),
                            tf.local_variables_initializer())
         sess.run(init_op)
@@ -48,7 +45,7 @@ def test_once(tfrecords_path, batch_size, model_checkpoint_path):
         try:
             while not coord.should_stop():
                 prob_gender_val, real_gender, prob_age_val, real_age, image_val, gender_acc_val, abs_age_error_val, cross_entropy_mean_val, file_names = sess.run(
-                    [prob_gender, gender_labels, prob_age, age_labels, features, gender_acc, abs_age_error, total_loss,
+                    [abs_age_error, gender_labels, prob_age, age_labels, features, gender_acc, abs_age_error, total_loss,
                      file_paths])
                 mean_error_age.append(abs_age_error_val)
                 mean_gender_acc.append(gender_acc_val)
