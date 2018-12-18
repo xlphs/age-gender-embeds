@@ -22,7 +22,7 @@ python prepare.py
 
 ### Train model
 
-Network is defined in `network.py`, it's a small network that trains very quickly.
+Network is defined in `network_conv.py`, it's a small network that trains very quickly.
 
 Train command: `python train.py`
 
