@@ -11,8 +11,6 @@ def read_and_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
 
-    embeddings_size = 512
-
     features = tf.parse_single_example(
         serialized_example,
         # Defaults are not specified since both keys are required.
@@ -63,7 +61,7 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         prelogits, _ = inception_resnet_v1.inference(features, keep_probability=kp, 
                 phase_train=phase_train, bottleneck_layer_size=512, 
                 weight_decay=wd)
-        net, gender_logits, age_logits = transfer(prelogits,
+        gender_logits, age_logits = transfer(prelogits,
                 features, age_labels, gender_labels, phase_train, wd)
 
        	# Add to the Graph the loss calculation.
@@ -82,7 +80,8 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         age = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
         abs_loss = tf.losses.absolute_difference(age_labels, age)
 
-        gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
+        prob_gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
+        gender_acc = tf.reduce_mean(tf.to_float(tf.equal(tf.to_int64(prob_gender), gender_labels)))
 
         tf.summary.scalar("age_cross_entropy", age_cross_entropy_mean)
         tf.summary.scalar("gender_cross_entropy", gender_cross_entropy_mean)
@@ -92,9 +91,14 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
 
         global_step = tf.Variable(0, name="global_step", trainable=False)
         lr = tf.train.exponential_decay(start_lr, global_step=global_step,
-              decay_steps=3000, decay_rate=0.9, staircase=True)
+              decay_steps=2000, decay_rate=0.1, staircase=True)
         optimizer = tf.train.AdamOptimizer(lr)
         tf.summary.scalar("lr", lr)
+
+        # train the bottleneck layer and my network
+        trainable = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='InceptionResnetV1/Bottleneck') + tf.get_collection(
+            tf.GraphKeys.GLOBAL_VARIABLES, scope='Net')
+        print('trainable', trainable)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -108,7 +112,7 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         train_writer = tf.summary.FileWriter(log_dir, sess.graph)
 
         variables_to_restore = slim.get_variables_to_restore()
-        new_saver = tf.train.Saver(variables_to_restore, max_to_keep=5)
+        new_saver = tf.train.Saver(variables_to_restore, max_to_keep=10)
         ckpt = tf.train.get_checkpoint_state(model_path)
         if ckpt and ckpt.model_checkpoint_path:
             new_saver.restore(sess, ckpt.model_checkpoint_path)
@@ -130,7 +134,6 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
                     duration = time.time() - start_time
                     print('%.3f sec' % duration)
                     start_time = time.time()
-                if step % 1000 == 0:
                     save_path = new_saver.save(sess, os.path.join(model_path, "model.ckpt"), global_step=global_step)
                     print("Model saved in file: %s" % save_path)
                 step = sess.run(global_step)
@@ -148,12 +151,12 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--learning_rate", "--lr", type=float, default=1e-3, help="Init learning rate")
-    parser.add_argument("--weight_decay", type=float, default=5e-4, help="Set 0 to disable weight decay")
+    parser.add_argument("--weight_decay", type=float, default=1e-5, help="Set 0 to disable weight decay")
     parser.add_argument("--model_path", type=str, default="./models", help="Path to save models")
     parser.add_argument("--log_path", type=str, default="./log", help="Path to save logs")
-    parser.add_argument("--epoch", type=int, default=50, help="Epoch")
+    parser.add_argument("--epoch", type=int, default=10, help="Epoch")
     parser.add_argument("--tfrecords", type=str, default="./tfrecords/train.tfrecords", help="Path of tfrecords")
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=20, help="Batch size")
     parser.add_argument("--keep_prob", type=float, default=0.8, help="Used by dropout")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")

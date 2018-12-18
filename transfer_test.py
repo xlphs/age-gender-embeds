@@ -12,8 +12,6 @@ def read_and_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
 
-    embeddings_size = 512
-
     features = tf.parse_single_example(
         serialized_example,
         # Defaults are not specified since both keys are required.
@@ -84,7 +82,7 @@ def test_once(tfrecords_path, batch_size, model_checkpoint_path):
         abs_age_error = tf.losses.absolute_difference(prob_age, age_labels)
 
         prob_gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
-        gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
+        gender_acc = tf.reduce_mean(tf.to_float(tf.equal(tf.to_int64(prob_gender), gender_labels)))
 
         init_op = tf.group(tf.global_variables_initializer(),
                            tf.local_variables_initializer())
