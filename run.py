@@ -1,6 +1,6 @@
 import argparse
 import os
-
+import glob
 import numpy as np
 import tensorflow as tf
 from network_conv import inference
@@ -20,7 +20,7 @@ def load_graph(frozen_graph_filename):
         tf.import_graph_def(graph_def, name="")
     return graph
 
-def run(image_path, model_path):
+def run(features, model_path):
     graph = load_graph(model_path)
 
     with tf.Session(graph=graph) as sess:
@@ -28,16 +28,25 @@ def run(image_path, model_path):
         age = graph.get_tensor_by_name('age:0')
         gender = graph.get_tensor_by_name('gender:0')
 
-        embeddings_size = 512
-        features = np.array(load_csv_features(image_path)).reshape(1, embeddings_size)
-
         return sess.run([age, gender], feed_dict={
            input: features,
         })
 
+def load_embeddings(image_dir):
+    addrs = np.array(glob.glob(image_dir))
+
+    embeddings = []
+    file_paths = []
+
+    for i in range(len(addrs)):
+        embeddings.append(load_csv_features(addrs[i]))
+        file_paths.append(addrs[i])
+    
+    return embeddings, file_paths
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--features", type=str, default="./test.csv", help="Features path")
+    parser.add_argument("--features", type=str, default="./demo/embeddings/*.csv", help="Features file pattern")
     parser.add_argument("--model_path", type=str, default="./models/frozen.pb", help="Model path")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")
@@ -45,7 +54,9 @@ if __name__ == '__main__':
     if not args.cuda:
         os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    age, gender = run(args.features, args.model_path)
+    embeddings, file_paths = load_embeddings(args.features)
+    ages, genders = run(embeddings, args.model_path)
 
-    print('age ', age)
-    print('gender ', "F" if gender == 1 else "M")
+    for i in range(len(file_paths)):
+        gender = "F" if genders[i] == 1 else "M"
+        print(file_paths[i] + ': gender=' + gender, ' age=', ages[i])

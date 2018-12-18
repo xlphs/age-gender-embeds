@@ -90,8 +90,8 @@ def main(args):
             # see facenet train_softmax.py
             prelogits, _ = inception_resnet_v1.inference(features, keep_probability=0.8, 
                 phase_train=phase_train, bottleneck_layer_size=512, 
-                weight_decay=5e-4)
-            net, gender_logits, age_logits = transfer(prelogits,
+                weight_decay=1e-5)
+            gender_logits, age_logits = transfer(prelogits,
                 features, age_labels, gender_labels, phase_train)
             
             # Add to the Graph the loss calculation.
@@ -110,7 +110,8 @@ def main(args):
             age = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
             abs_loss = tf.losses.absolute_difference(age_labels, age)
 
-            gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
+            prob_gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
+            gender_acc = tf.reduce_mean(tf.to_float(tf.equal(tf.to_int64(prob_gender), gender_labels)))
 
             # Train model and update
             tf.summary.scalar("age_cross_entropy", age_cross_entropy_mean)
@@ -121,7 +122,7 @@ def main(args):
 
             global_step = tf.Variable(0, name="global_step", trainable=False)
             lr = tf.train.exponential_decay(1e-3, global_step=global_step,
-                  decay_steps=2000, decay_rate=0.6, staircase=True)
+                  decay_steps=2000, decay_rate=0.1, staircase=True)
             optimizer = tf.train.AdamOptimizer(lr)
 
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)

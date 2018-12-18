@@ -240,7 +240,7 @@ def inception_resnet_v1(inputs, is_training=True,
           
                     end_points['PreLogitsFlatten'] = net
 
-                # net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None, 
-                #         scope='Bottleneck', reuse=False)
+                net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None, 
+                        scope='Bottleneck', reuse=False)
   
     return net, end_points
