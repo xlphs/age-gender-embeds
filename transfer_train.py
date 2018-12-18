@@ -80,7 +80,8 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         age = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
         abs_loss = tf.losses.absolute_difference(age_labels, age)
 
-        gender_acc = tf.reduce_mean(tf.cast(tf.nn.in_top_k(gender_logits, gender_labels, 1), tf.float32))
+        prob_gender = tf.argmax(tf.nn.softmax(gender_logits), 1)
+        gender_acc = tf.reduce_mean(tf.to_float(tf.equal(tf.to_int64(prob_gender), gender_labels)))
 
         tf.summary.scalar("age_cross_entropy", age_cross_entropy_mean)
         tf.summary.scalar("gender_cross_entropy", gender_cross_entropy_mean)
@@ -90,7 +91,7 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
 
         global_step = tf.Variable(0, name="global_step", trainable=False)
         lr = tf.train.exponential_decay(start_lr, global_step=global_step,
-              decay_steps=3000, decay_rate=0.9, staircase=True)
+              decay_steps=1000, decay_rate=0.1, staircase=True)
         optimizer = tf.train.AdamOptimizer(lr)
         tf.summary.scalar("lr", lr)
 
@@ -148,9 +149,9 @@ if __name__ == '__main__':
     parser.add_argument("--weight_decay", type=float, default=5e-4, help="Set 0 to disable weight decay")
     parser.add_argument("--model_path", type=str, default="./models", help="Path to save models")
     parser.add_argument("--log_path", type=str, default="./log", help="Path to save logs")
-    parser.add_argument("--epoch", type=int, default=50, help="Epoch")
+    parser.add_argument("--epoch", type=int, default=10, help="Epoch")
     parser.add_argument("--tfrecords", type=str, default="./tfrecords/train.tfrecords", help="Path of tfrecords")
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=20, help="Batch size")
     parser.add_argument("--keep_prob", type=float, default=0.8, help="Used by dropout")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")
