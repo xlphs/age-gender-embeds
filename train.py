@@ -48,13 +48,15 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         optimizer = tf.train.AdamOptimizer(lr)
         tf.summary.scalar("lr", lr)
 
-        # only train age branch
+        # # only train age branch
         # trainable = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Net/Branch1') + tf.get_collection(
         #     tf.GraphKeys.GLOBAL_VARIABLES, scope='Logits/Age')
 
+        all_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)  # update batch normalization layer
         with tf.control_dependencies(update_ops):
-            train_op = optimizer.minimize(total_loss, global_step) # , var_list=trainable
+            train_op = optimizer.minimize(total_loss, global_step) #, var_list=trainable
 
         init_op = tf.group(tf.global_variables_initializer(),
                            tf.local_variables_initializer())
@@ -63,7 +65,7 @@ def run_training(tfrecords_path, batch_size, epoch, model_path, log_dir, start_l
         merged = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter(log_dir, sess.graph)
 
-        new_saver = tf.train.Saver(max_to_keep=100)
+        new_saver = tf.train.Saver(all_vars, max_to_keep=100)
        	ckpt = tf.train.get_checkpoint_state(model_path)
         if ckpt and ckpt.model_checkpoint_path:
             new_saver.restore(sess, ckpt.model_checkpoint_path)
