@@ -21,10 +21,10 @@ def main(args):
         age_ = tf.cast(tf.constant([i for i in range(0, 117)]), tf.float32)
         age__ = tf.reduce_sum(tf.multiply(tf.nn.softmax(age_logits), age_), axis=1)
         age = tf.cast(age__, tf.int64, name="age")
-        # below for openvino
-        # gender = tf.nn.softmax(gender_logits, name="gender")
-        # age = tf.nn.softmax(age_logits, name="age")
-        # output = tf.concat([age, gender], axis=1, name="output")        
+        if args.openvino:
+            gender = tf.nn.softmax(gender_logits, name="gender")
+            age = tf.nn.softmax(age_logits, name="age")
+            output = tf.concat([age, gender], axis=1, name="output")        
         
         init_op = tf.group(tf.global_variables_initializer(),
                            tf.local_variables_initializer())
@@ -43,8 +43,8 @@ def main(args):
 
         # Freeze the graph def
         output_graph_def = freeze_graph_def(sess, input_graph_def, 'age,gender')
-        # below for openvino, 1 output
-        # output_graph_def = freeze_graph_def(sess, input_graph_def, 'output')
+        if args.openvino:
+            output_graph_def = freeze_graph_def(sess, input_graph_def, 'output')
 
         # Serialize and dump the output graph to the filesystem
         with tf.gfile.GFile(args.output_file, 'wb') as f:
@@ -81,10 +81,12 @@ def freeze_graph_def(sess, input_graph_def, output_node_names):
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--model_dir', type=str, 
+    parser.add_argument('--model_dir', type=str, default="./models",
         help='Directory containing the metagraph (.meta) file and the checkpoint (ckpt) file containing model parameters')
-    parser.add_argument('--output_file', type=str, 
+    parser.add_argument('--output_file', type=str, default="./models/frozen.pb",
         help='Filename for the exported graphdef protobuf (.pb)')
+    parser.add_argument('--openvino', default=False, 
+        help='Export for OpenVino')
     return parser.parse_args(argv)
 
 if __name__ == '__main__':
