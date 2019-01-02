@@ -1,12 +1,23 @@
 # TensorFlow Age and Gender Estimation using Facenet Embeddings
 
-This is a TensorFlow experiment for age and gender estimation, designed to take Facenet embeddings as input.
+This is a TensorFlow experiment for age and gender estimation, designed to take Facenet embeddings as input. Note the pretrained model uses softmax loss.
+
+## LFW Gender Accuracy
+
+There's manually verified LFW gender labels from [http://vis-www.cs.umass.edu/lfw/](http://vis-www.cs.umass.edu/lfw/)
+
+My test result:
+
+```
+Male 0.9854, correct 10118, wrong 138
+Female 0.9535, correct 2828, wrong 149
+```
 
 ## Dataset
 
 ### UTKFace
 
-[UTKFace](https://susanqq.github.io/UTKFace/) cropped and aligned, then converted to 512D embeddings.
+[UTKFace](https://susanqq.github.io/UTKFace/) cropped and aligned, then converted to 512D embeddings, you should use embeddings from a model trained with softmax loss.
 
 [Facenet](https://github.com/davidsandberg/facenet) for generating embeddings.
 
@@ -52,10 +63,12 @@ Age_MAE:5.72, Gender_Acc:96.45%, Loss:3.3
 
 Put 512D embeddings in a CSV file, then call run.py with `--features` argument.
 
+Although UTKFaces are tightly cropped, I have tested with 5% margin for LFW gender and accuracy is not affected.
 
 ### TODO
 
 - Try embeddings from models trained with different loss functions
+   - Tried ArcFace and it is not suitable for this task
 - Use embeddings to estimate race and/or expression
 
 

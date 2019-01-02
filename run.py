@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--features", type=str, default="./demo/embeddings/*.csv", help="Features file pattern")
     parser.add_argument("--model_path", type=str, default="./models/frozen.pb", help="Model path")
+    parser.add_argument("--output_path", type=str, default="./output.csv", help="Output path")
     parser.add_argument("--cuda", default=False, action="store_true",
                         help="Set this flag will use cuda when testing.")
     args = parser.parse_args()
@@ -60,3 +61,11 @@ if __name__ == '__main__':
     for i in range(len(file_paths)):
         gender = "F" if genders[i] == 1 else "M"
         print(file_paths[i] + ': gender=' + gender, ' age=', ages[i])
+
+    if args.output_path:
+        # csv columns: file_path,age,gender
+        fh = open(args.output_path, "w") 
+        for i in range(len(file_paths)):
+            _, filename = os.path.split(file_paths[i])
+            fh.write('%s,%u,%u\n' % (filename, genders[i], ages[i]))
+        fh.close()
